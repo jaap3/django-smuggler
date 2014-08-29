@@ -6,15 +6,18 @@
 # General Public License version 3 (LGPLv3) as published by the Free
 # Software Foundation. See the file README for copying conditions.
 import os.path
-from datetime import datetime
+import tarfile
 import tempfile
+from datetime import datetime
+from itertools import chain
 from django.contrib.admin.helpers import AdminForm
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.management.base import CommandError
 from django.core.serializers.base import DeserializationError
 from django.db import IntegrityError
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, StreamingHttpResponse
 from django.utils.encoding import force_text
+from django.utils.six import StringIO
 from django.utils.translation import ugettext_lazy as _, ungettext_lazy
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
@@ -160,12 +163,42 @@ class LoadDataView(AdminFormMixin, FormView):
         return [(None, {'fields': fields})]
 
 class DumpStorageView(FormView):
+    archive_format = 'tgz'
     form_class = DumpStorageForm
     template_name = 'smuggler/storage.html'
     success_url = '.'
 
+    def archive_generator(self, base_dir, file_list):
+        out = StringIO()
+        with tarfile.open(fileobj=out, mode='w|gz') as archive:
+            for path in file_list:
+                archive.add(path, os.path.relpath(path, base_dir),
+                            recursive=False)
+                yield out.getvalue()
+                out.truncate(0)
+        yield out.getvalue()
+        out.close()
+
+    def get_file_list(self, selected, storage, base_dir='./'):
+        file_list = []
+        for path in selected:
+            path = os.path.join(base_dir, path)
+            abspath = storage.path(path)
+            if os.path.isdir(abspath):
+                file_list += self.get_file_list(chain(*storage.listdir(path)),
+                                                storage, base_dir=path)
+            file_list.append(abspath)
+        return file_list
+
     def form_valid(self, form):
-        return super(DumpStorageForm, self).form_valid(form)
+        file_list = self.get_file_list(form.cleaned_data['files'], form.storage)
+        filename = '%s.%s' % (datetime.now().isoformat(),
+                              self.archive_format)
+        response = StreamingHttpResponse(self.archive_generator(form.base_dir,
+                                                                file_list))
+        response.content_type = 'application/x-compressed'
+        response['Content-Disposition'] = 'attachment; filename=%s' % filename
+        return response
 
     def get_context_data(self, **kwargs):
         context = super(DumpStorageView, self).get_context_data(

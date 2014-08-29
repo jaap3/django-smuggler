@@ -12,6 +12,7 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
 from django.core.serializers import get_serializer_formats
+from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from smuggler import settings
 
@@ -120,28 +121,43 @@ class ImportForm(forms.Form):
 class DumpStorageForm(forms.Form):
     files = forms.MultipleChoiceField(
         label=_('Files'), widget=FilteredSelectMultiple(_('files'), False))
+    storage_class = DefaultStorage
+
+    @cached_property
+    def storage(self):
+        storage = self.storage_class()
+        self.test_storage(storage)
+        return storage
 
     @staticmethod
-    def is_valid_storage(storage):
+    def test_storage(storage):
         try:
             storage.listdir('.')
             storage.path('.')
         except NotImplementedError:
             raise ImproperlyConfigured(
-                'DefaultStorage must implement `listdir` and `path`.')
-        return True
+                'Storage class must implement `listdir` and `path`.')
+
+    @cached_property
+    def base_dir(self):
+        return self.storage.path('.')
+
+    def format_choice(self, path, is_dir=False):
+        if is_dir:
+            display = '/%s/' % path
+        else:
+            display = '/%s' % path
+        return path, display
 
     def __init__(self, *args, **kwargs):
         super(DumpStorageForm, self).__init__(*args, **kwargs)
-        storage = DefaultStorage()
-        if self.is_valid_storage(storage):
-            directories, files = storage.listdir('.')
-            choices = [
-                [(storage.path(path), '/%s/' % path) for path in directories],
-                [(storage.path(path), '/%s' % path) for path in files]]
-            self.fields['files'].choices = chain(*choices)
-            self.fields['files'].help_text = _('Contents of %(dir)s') % {
-                'dir': storage.path('.')}
+        dirs, files = self.storage.listdir('.')
+        choices = [
+            [self.format_choice(path, True) for path in dirs],
+            [self.format_choice(path) for path in files]]
+        self.fields['files'].choices = chain(*choices)
+        self.fields['files'].help_text = _('Contents of %(dir)s') % {
+            'dir': self.base_dir}
 
     class Media:
         css = {
