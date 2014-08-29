@@ -17,7 +17,7 @@ from django.core.serializers.base import DeserializationError
 from django.db import IntegrityError
 from django.http import HttpResponseRedirect, StreamingHttpResponse
 from django.utils.encoding import force_text
-from django.utils.six import StringIO
+from django.utils.six import BytesIO
 from django.utils.translation import ugettext_lazy as _, ungettext_lazy
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
@@ -169,7 +169,7 @@ class DumpStorageView(FormView):
     success_url = '.'
 
     def archive_generator(self, base_dir, file_list):
-        out = StringIO()
+        out = BytesIO()
         with tarfile.open(fileobj=out, mode='w|gz') as archive:
             for path in file_list:
                 archive.add(path, os.path.relpath(path, base_dir),
