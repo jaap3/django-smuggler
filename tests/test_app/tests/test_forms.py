@@ -1,4 +1,6 @@
 import os.path
+from django.core.exceptions import ImproperlyConfigured
+from django.core.files.storage import DefaultStorage, Storage
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.forms import BooleanField, FilePathField
 from django.test import TestCase
@@ -6,7 +8,7 @@ from django.test.utils import override_settings
 from django.utils.datastructures import MultiValueDict
 from django.utils.six.moves import reload_module
 from smuggler import settings
-from smuggler.forms import ImportForm
+from smuggler.forms import ImportForm, DumpStorageForm
 
 
 p = lambda *args: os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -78,3 +80,30 @@ class TestForm(TestCase):
 
     def tearDown(self):
         reload_module(settings)
+
+
+class TestDumpStorageForm(TestCase):
+    def setUp(self):
+        self.form = DumpStorageForm()
+
+    def test_requires_file(self):
+        form = DumpStorageForm({})
+        self.assertFalse(form.is_valid())
+        self.assertEqual({'files': ["This field is required."]},
+                         form.errors)
+
+    def test_storage_attribute(self):
+        self.assertIsInstance(self.form.storage, DefaultStorage)
+
+    def test_validates_storage_methods(self):
+        BadStorageForm = type('BadStorageForm', (DumpStorageForm,), {})
+        BadStorageForm.storage_class = Storage
+        with self.assertRaises(ImproperlyConfigured) as assertion:
+            BadStorageForm().storage
+            self.assertEqual(str(assertion), 'Storage class must implement'
+                                             ' `listdir` and `path`.')
+
+    def test_get_choices(self):
+        self.assertEqual(
+            set(dict(self.form.fields['files'].choices).keys()),
+            set(['files', 'uploads', 'uploaded_file.txt']))

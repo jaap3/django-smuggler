@@ -1,16 +1,17 @@
 import json
 import os.path
+import tarfile
 from django.contrib import messages
 from django.contrib.auth.models import User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.urlresolvers import reverse
 from django.test import TestCase, TransactionTestCase, Client
 from django.test.utils import override_settings
+from django.utils.six import assertRegex, BytesIO
 from django.utils.six.moves import reload_module
-from django.utils.six import assertRegex
 from freezegun import freeze_time
 from smuggler import settings
-from smuggler.forms import ImportForm
+from smuggler.forms import ImportForm, DumpStorageForm
 from tests.test_app.models import Page
 
 
@@ -200,3 +201,53 @@ class TestLoadDataPost(SuperUserTestCase, TransactionTestCase):
 
     def tearDown(self):
         reload_module(settings)
+
+
+class TestDumpStorageGet(SuperUserTestCase, TestCase):
+    def setUp(self):
+        super(TestDumpStorageGet, self).setUp()
+        self.url = reverse('dump-storage')
+
+    def test_renders_correct_template(self):
+        response = self.c.get(self.url)
+        self.assertTemplateUsed(response, 'smuggler/storage.html')
+
+    def test_has_form_in_context(self):
+        response = self.c.get(self.url)
+        self.assertIsInstance(response.context['form'],
+                              DumpStorageForm)
+
+
+class TestDumpStoragePost(SuperUserTestCase, TestCase):
+    def setUp(self):
+        super(TestDumpStoragePost, self).setUp()
+        url = reverse('dump-storage')
+        with freeze_time('2012-01-14'):
+            self.response = self.c.post(url, {
+                'files': ['files', 'uploads', 'uploaded_file.txt']
+            })
+
+    def test_contenttype(self):
+        self.assertEqual(self.response.content_type,
+                         'application/x-compressed')
+
+    def test_filename(self):
+        self.assertEqual(self.response['Content-Disposition'],
+                         'attachment; filename=2012-01-14T00:00:00.tgz')
+
+    def test_archive(self):
+        f = BytesIO()
+        for data in self.response.streaming_content:
+            f.write(data)
+        f.seek(0)
+        archive = tarfile.open(fileobj=f,
+                               mode='r:gz')
+        self.assertEqual(archive.getnames(), [
+            'files/uploaded_file.txt',
+            'files',
+            'uploads/sub/uploaded_file.txt',
+            'uploads/sub',
+            'uploads/uploaded_file.txt',
+            'uploads',
+            'uploaded_file.txt'
+        ])

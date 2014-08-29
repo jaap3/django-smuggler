@@ -19,3 +19,6 @@ class TestSmugglerUrls(TestCase):
 
     def test_can_reverse_load_data(self):
         self.assertEqual(reverse('load-data'), '/admin/load/')
+
+    def test_can_reverse_dump_storage(self):
+        self.assertEqual(reverse('dump-storage'), '/admin/storage/')
