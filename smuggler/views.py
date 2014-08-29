@@ -19,7 +19,7 @@ from django.utils.translation import ugettext_lazy as _, ungettext_lazy
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.views.generic.edit import FormView
-from smuggler.forms import ImportForm
+from smuggler.forms import ImportForm, DumpStorageForm
 from smuggler import settings
 from smuggler.utils import (save_uploaded_file_on_disk, serialize_to_response,
                             load_fixtures)
@@ -159,4 +159,24 @@ class LoadDataView(AdminFormMixin, FormView):
             ]
         return [(None, {'fields': fields})]
 
+class DumpStorageView(FormView):
+    form_class = DumpStorageForm
+    template_name = 'smuggler/storage.html'
+    success_url = '.'
+
+    def form_valid(self, form):
+        return super(DumpStorageForm, self).form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super(DumpStorageView, self).get_context_data(
+            adminform=self.get_admin_form(kwargs['form']),
+            **kwargs)
+        return context
+
+    def get_admin_form(self, form):
+        fields = form.fields.keys()
+        return AdminForm(form, [(None, {'fields': fields})], {})
+
+
 load_data = user_passes_test(is_superuser)(LoadDataView.as_view())
+dump_storage = user_passes_test(is_superuser)(DumpStorageView.as_view())

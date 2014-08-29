@@ -6,8 +6,11 @@
 # General Public License version 3 (LGPLv3) as published by the Free
 # Software Foundation. See the file README for copying conditions.
 import os.path
+from itertools import chain
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.core.exceptions import ImproperlyConfigured
+from django.core.files.storage import DefaultStorage
 from django.core.serializers import get_serializer_formats
 from django.utils.translation import ugettext_lazy as _
 from smuggler import settings
@@ -105,7 +108,45 @@ class ImportForm(forms.Form):
         css = {
             'all': ['admin/css/forms.css']
         }
+        js = [
+            'admin/js/core.js',
+            'admin/js/jquery.min.js',
+            'admin/js/jquery.init.js',
+            'admin/js/SelectBox.js',
+            'admin/js/SelectFilter2.js'
+        ]
 
+
+class DumpStorageForm(forms.Form):
+    files = forms.MultipleChoiceField(
+        label=_('Files'), widget=FilteredSelectMultiple(_('files'), False))
+
+    @staticmethod
+    def is_valid_storage(storage):
+        try:
+            storage.listdir('.')
+            storage.path('.')
+        except NotImplementedError:
+            raise ImproperlyConfigured(
+                'DefaultStorage must implement `listdir` and `path`.')
+        return True
+
+    def __init__(self, *args, **kwargs):
+        super(DumpStorageForm, self).__init__(*args, **kwargs)
+        storage = DefaultStorage()
+        if self.is_valid_storage(storage):
+            directories, files = storage.listdir('.')
+            choices = [
+                [(storage.path(path), '/%s/' % path) for path in directories],
+                [(storage.path(path), '/%s' % path) for path in files]]
+            self.fields['files'].choices = chain(*choices)
+            self.fields['files'].help_text = _('Contents of %(dir)s') % {
+                'dir': storage.path('.')}
+
+    class Media:
+        css = {
+            'all': ['admin/css/forms.css']
+        }
         js = [
             'admin/js/core.js',
             'admin/js/jquery.min.js',

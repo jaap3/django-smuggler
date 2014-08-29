@@ -1,0 +1,45 @@
+{% extends "admin/base_site.html" %}
+{# load cycle from future # cannot do this yet because we support Django < 1.6 #}
+{% load url from future %} {# For Django < 1.5 #}
+{% load i18n %}
+
+{% block title %}{% trans "Dump storage" %} {{ block.super }}{% endblock %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  {{ form.media }}
+{% endblock %}
+
+{% block bodyclass %}change-form{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+  <a href="{% url 'admin:index' %}">{% trans "Home" %}</a> &rsaquo;
+  {% trans "Dump storage" %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+<form action="." method="post" id="dump_storage_form">
+  <h1>{% trans "Dump storage" %}</h1>
+  {% csrf_token %}
+  {% if form.errors %}
+  <p class="errornote">
+    {% if form.errors|length == 1 %}
+      {% trans "Please correct the error below." %}
+    {% else %}
+      {% trans "Please correct the errors below." %}
+    {% endif %}
+  </p>
+  {{ form.non_field_errors }}
+  {% endif %}
+  {% for fieldset in adminform %}
+    {% include "admin/includes/fieldset.html" %}
+  {% endfor %}
+  <div class="submit-row">
+    <input type="submit" value="{% trans 'Dump' %}" class="default" name="_save">
+  </div>
+</form>
+</div>
+{% endblock %}

@@ -21,5 +21,8 @@ urlpatterns = [
         name='dump-model-data'),
     url(r'^load/$',
         'smuggler.views.load_data',
-        name='load-data')
+        name='load-data'),
+    url(r'^storage/$',
+        'smuggler.views.dump_storage',
+        name='dump-storage')
 ]

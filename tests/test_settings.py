@@ -3,8 +3,10 @@ p = lambda *args: os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                *args))
 
 DEBUG = True
-STATIC_ROOT = p('')
+STATIC_ROOT = p('static')
 STATIC_URL = '/static/'
+MEDIA_ROOT = p('media')
+MEDIA_URL = '/media/'
 
 DATABASES = {
     'default': {
