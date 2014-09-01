@@ -162,7 +162,8 @@ class LoadDataView(AdminFormMixin, FormView):
             ]
         return [(None, {'fields': fields})]
 
-class DumpStorageView(FormView):
+
+class DumpStorageView(AdminFormMixin, FormView):
     archive_format = 'tgz'
     form_class = DumpStorageForm
     template_name = 'smuggler/storage.html'
@@ -199,16 +200,6 @@ class DumpStorageView(FormView):
         response.content_type = 'application/x-compressed'
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
         return response
-
-    def get_context_data(self, **kwargs):
-        context = super(DumpStorageView, self).get_context_data(
-            adminform=self.get_admin_form(kwargs['form']),
-            **kwargs)
-        return context
-
-    def get_admin_form(self, form):
-        fields = form.fields.keys()
-        return AdminForm(form, [(None, {'fields': fields})], {})
 
 
 load_data = user_passes_test(is_superuser)(LoadDataView.as_view())
