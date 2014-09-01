@@ -331,3 +331,43 @@ class TestLoadStorageGet(SuperUserTestCase, TestCase):
     def test_button_verb(self):
         response = self.c.get(self.url)
         self.assertContains(response, '<input type="submit" value="Load"')
+
+
+class TestLoadStoragePost(SuperUserTestCase, TestCase):
+    def setUp(self):
+        super(TestLoadStoragePost, self).setUp()
+        self.url = reverse('load-storage')
+
+    def test_upload(self):
+        f = open(p('..', 'archive', 'archive.tgz'), mode='rb')
+        self.c.post(self.url, {'upload': f}, follow=True)
+        self.assertTrue(os.path.exists(
+            p('..', '..', 'media', 'uploaded_file_2.txt')))
+
+    def test_upload_message(self):
+        f = open(p('..', 'archive', 'archive.tgz'), mode='rb')
+        response = self.c.post(self.url, {
+            'upload': f
+        }, follow=True)
+        response_messages = list(response.context['messages'])
+        self.assertEqual(1, len(response_messages))
+        self.assertEqual(messages.INFO, response_messages[0].level)
+        self.assertEqual(response_messages[0].message,
+                         'Extracted 1 file. Skipped 4 files.')
+
+    def test_load_invalid_file(self):
+        f = open(p('..', 'smuggler_fixtures', 'page_dump.json'), mode='rb')
+        response = self.c.post(self.url, {
+            'upload': f
+        }, follow=True)
+        response_messages = list(response.context['messages'])
+        self.assertEqual(1, len(response_messages))
+        self.assertEqual(messages.ERROR, response_messages[0].level)
+        self.assertEqual(response_messages[0].message,
+                         'An exception occurred while extracting:'
+                         ' not a gzip file')
+
+    def tearDown(self):
+        fn = p('..', '..', 'media', 'uploaded_file_2.txt')
+        if os.path.exists(fn):
+            os.unlink(fn)

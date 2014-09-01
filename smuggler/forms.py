@@ -118,16 +118,8 @@ class ImportForm(forms.Form):
         ]
 
 
-class DumpStorageForm(forms.Form):
-    files = forms.MultipleChoiceField(
-        label=_('Files'), widget=FilteredSelectMultiple(_('files'), False))
+class StorageMixin(object):
     storage_class = DefaultStorage
-
-    def __init__(self, *args, **kwargs):
-        super(DumpStorageForm, self).__init__(*args, **kwargs)
-        self.fields['files'].choices = self.get_choices()
-        self.fields['files'].help_text = _('Contents of %(dir)s') % {
-            'dir': self.base_dir}
 
     @cached_property
     def storage(self):
@@ -143,6 +135,17 @@ class DumpStorageForm(forms.Form):
         except NotImplementedError:
             raise ImproperlyConfigured(
                 'Storage class must implement `listdir` and `path`.')
+
+
+class DumpStorageForm(StorageMixin, forms.Form):
+    files = forms.MultipleChoiceField(
+        label=_('Files'), widget=FilteredSelectMultiple(_('files'), False))
+
+    def __init__(self, *args, **kwargs):
+        super(DumpStorageForm, self).__init__(*args, **kwargs)
+        self.fields['files'].choices = self.get_choices()
+        self.fields['files'].help_text = _('Contents of %(dir)s') % {
+            'dir': self.base_dir}
 
     @cached_property
     def base_dir(self):
@@ -195,7 +198,7 @@ class DumpStorageForm(forms.Form):
         ]
 
 
-class LoadStorageForm(forms.Form):
+class LoadStorageForm(StorageMixin, forms.Form):
     upload = forms.FileField(_('upload'))
 
     class Media:

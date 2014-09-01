@@ -8,7 +8,7 @@ from django.test.utils import override_settings
 from django.utils.datastructures import MultiValueDict
 from django.utils.six.moves import reload_module
 from smuggler import settings
-from smuggler.forms import ImportForm, DumpStorageForm
+from smuggler.forms import ImportForm, DumpStorageForm, LoadStorageForm
 
 
 p = lambda *args: os.path.abspath(os.path.join(os.path.dirname(__file__),
@@ -118,3 +118,11 @@ class TestDumpStorageForm(TestCase):
             u'/uploaded_file.txt (3 bytes)\n'
             u'/uploads/ (1 file, 6 bytes)\n'
             u'/uploads/sub/ (1 file, 9 bytes)')
+
+
+class TestLoadStorageForm(TestCase):
+    def test_requires_upload(self):
+        form = LoadStorageForm({}, {})
+        self.assertFalse(form.is_valid())
+        self.assertEqual({'upload': ["This field is required."]},
+                         form.errors)

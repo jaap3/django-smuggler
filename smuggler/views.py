@@ -220,6 +220,40 @@ class LoadStorageView(AdminFormMixin, FormView):
     template_name = 'smuggler/load_storage_form.html'
     success_url = '.'
 
+    def form_valid(self, form):
+        extracted = 0
+        skipped = 0
+        try:
+            archive = tarfile.open(fileobj=form.cleaned_data['upload'],
+                                   mode='r:gz')
+            for fn in archive.getnames():
+                content = archive.extractfile(fn)
+                if content is None:
+                    # content is None for directories.
+                    continue
+                if not form.storage.exists(fn):
+                    if not hasattr(content, 'chunks'):
+                        # Hack in chunks for Django < 1.6
+                        content.chunks = lambda: iter(content.readlines())
+                    form.storage.save(fn, content)
+                    extracted += 1
+                else:
+                    skipped += 1
+        except tarfile.TarError as e:
+            messages.error(
+                self.request,
+                _('An exception occurred while extracting: %s') % str(e))
+        else:
+            user_msg = ' '.join([
+                ungettext_lazy('Extracted %(count)d file.',
+                               'Extracted %(count)d files.',
+                               extracted) % {'count': extracted},
+                ungettext_lazy('Skipped %(count)d file.',
+                               'Skipped %(count)d files.',
+                               skipped) % {'count': skipped}])
+            messages.info(self.request, user_msg)
+        return super(LoadStorageView, self).form_valid(form)
+
     def get_context_data(self, **kwargs):
         return super(LoadStorageView, self).get_context_data(
             title=_('Load Storage'), form_name='load_storage',
