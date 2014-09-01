@@ -210,7 +210,7 @@ class TestDumpStorageGet(SuperUserTestCase, TestCase):
 
     def test_renders_correct_template(self):
         response = self.c.get(self.url)
-        self.assertTemplateUsed(response, 'smuggler/storage.html')
+        self.assertTemplateUsed(response, 'smuggler/dump_storage_form.html')
 
     def test_has_form_in_context(self):
         response = self.c.get(self.url)
