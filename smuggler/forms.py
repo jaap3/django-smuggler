@@ -123,6 +123,16 @@ class DumpStorageForm(forms.Form):
         label=_('Files'), widget=FilteredSelectMultiple(_('files'), False))
     storage_class = DefaultStorage
 
+    def __init__(self, *args, **kwargs):
+        super(DumpStorageForm, self).__init__(*args, **kwargs)
+        dirs, files = self.storage.listdir('.')
+        choices = [
+            [self.format_choice(path, True) for path in dirs],
+            [self.format_choice(path) for path in files]]
+        self.fields['files'].choices = chain(*choices)
+        self.fields['files'].help_text = _('Contents of %(dir)s') % {
+            'dir': self.base_dir}
+
     @cached_property
     def storage(self):
         storage = self.storage_class()
@@ -148,16 +158,6 @@ class DumpStorageForm(forms.Form):
         else:
             display = '/%s' % path
         return path, display
-
-    def __init__(self, *args, **kwargs):
-        super(DumpStorageForm, self).__init__(*args, **kwargs)
-        dirs, files = self.storage.listdir('.')
-        choices = [
-            [self.format_choice(path, True) for path in dirs],
-            [self.format_choice(path) for path in files]]
-        self.fields['files'].choices = chain(*choices)
-        self.fields['files'].help_text = _('Contents of %(dir)s') % {
-            'dir': self.base_dir}
 
     class Media:
         css = {

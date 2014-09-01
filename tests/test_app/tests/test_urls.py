@@ -4,7 +4,7 @@ from django.test import TestCase
 
 class TestSmugglerUrls(TestCase):
     def test_can_reverse_dump_data(self):
-        self.assertEqual(reverse('dump-data'), '/admin/dump/')
+        self.assertEqual(reverse('dump-data'), '/admin/smuggler/dump-data/')
 
     def test_can_reverse_dump_app_data(self):
         url = reverse('dump-app-data', kwargs={'app_label': 'sites'})
@@ -18,7 +18,7 @@ class TestSmugglerUrls(TestCase):
         self.assertEqual(url, '/admin/sites/site/dump/')
 
     def test_can_reverse_load_data(self):
-        self.assertEqual(reverse('load-data'), '/admin/load/')
+        self.assertEqual(reverse('load-data'), '/admin/smuggler/load-data/')
 
     def test_can_reverse_dump_storage(self):
-        self.assertEqual(reverse('dump-storage'), '/admin/storage/')
+        self.assertEqual(reverse('dump-storage'), '/admin/smuggler/dump-storage/')

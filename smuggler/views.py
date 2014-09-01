@@ -166,7 +166,7 @@ class LoadDataView(AdminFormMixin, FormView):
 class DumpStorageView(AdminFormMixin, FormView):
     archive_format = 'tgz'
     form_class = DumpStorageForm
-    template_name = 'smuggler/storage.html'
+    template_name = 'smuggler/dump_storage_form.html'
     success_url = '.'
 
     def archive_generator(self, base_dir, file_list):

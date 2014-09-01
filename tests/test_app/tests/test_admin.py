@@ -18,7 +18,8 @@ class TestAdminNormalUser(TestCase):
 
     def test_has_no_load_button(self):
         response = self.c.get(self.url)
-        self.assertNotContains(response, '<a href="/admin/load/">')
+        self.assertNotContains(response,
+                               '<a href="/admin/smuggler/load-data/">')
 
     def test_has_no_dump_button(self):
         response = self.c.get(self.url)
@@ -38,7 +39,7 @@ class TestAdminSuperUser(TestCase):
 
     def test_has_load_button(self):
         response = self.c.get(self.url)
-        self.assertContains(response, '<a href="/admin/load/">')
+        self.assertContains(response, '<a href="/admin/smuggler/load-data/">')
 
     def test_has_dump_button(self):
         response = self.c.get(self.url)

@@ -8,7 +8,8 @@ class TestSmugglerViewsRequireAuthentication(TestCase):
         c = Client()
         url = reverse('dump-data')
         response = c.get(url)
-        self.assertRedirects(response, '/admin/login/?next=/admin/dump/')
+        self.assertRedirects(
+            response, '/admin/login/?next=/admin/smuggler/dump-data/')
 
     def test_dump_app_data(self):
         c = Client()
@@ -23,20 +24,22 @@ class TestSmugglerViewsRequireAuthentication(TestCase):
             'model_label': 'site'
         })
         response = c.get(url)
-        self.assertRedirects(response,
-                             '/admin/login/?next=/admin/sites/site/dump/')
+        self.assertRedirects(
+            response, '/admin/login/?next=/admin/sites/site/dump/')
 
     def test_load_data(self):
         c = Client()
         url = reverse('load-data')
         response = c.get(url, follow=True)
-        self.assertRedirects(response, '/admin/login/?next=/admin/load/')
+        self.assertRedirects(
+            response, '/admin/login/?next=/admin/smuggler/load-data/')
 
     def test_dump_storage(self):
         c = Client()
         url = reverse('dump-storage')
         response = c.get(url, follow=True)
-        self.assertRedirects(response, '/admin/login/?next=/admin/storage/')
+        self.assertRedirects(
+            response, '/admin/login/?next=/admin/smuggler/dump-storage/')
 
 
 class TestSmugglerViewsDeniesNonSuperuser(TestCase):

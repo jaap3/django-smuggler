@@ -10,19 +10,19 @@ from django.conf.urls import url
 
 
 urlpatterns = [
-    url(r'^dump/$',
+    url(r'^smuggler/dump-data/$',
         'smuggler.views.dump_data',
         name='dump-data'),
+    url(r'^smuggler/load-data/$',
+        'smuggler.views.load_data',
+        name='load-data'),
+    url(r'^smuggler/dump-storage/$',
+        'smuggler.views.dump_storage',
+        name='dump-storage'),
     url(r'^(?P<app_label>\w+)/dump/$',
         'smuggler.views.dump_app_data',
         name='dump-app-data'),
     url(r'^(?P<app_label>\w+)/(?P<model_label>\w+)/dump/$',
         'smuggler.views.dump_model_data',
-        name='dump-model-data'),
-    url(r'^load/$',
-        'smuggler.views.load_data',
-        name='load-data'),
-    url(r'^storage/$',
-        'smuggler.views.dump_storage',
-        name='dump-storage')
+        name='dump-model-data')
 ]
