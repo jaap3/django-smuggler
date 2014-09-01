@@ -9,7 +9,6 @@ import os.path
 import tarfile
 import tempfile
 from datetime import datetime
-from itertools import chain
 from django.contrib.admin.helpers import AdminForm
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.management.base import CommandError
@@ -22,7 +21,7 @@ from django.utils.translation import ugettext_lazy as _, ungettext_lazy
 from django.contrib import messages
 from django.contrib.auth.decorators import user_passes_test
 from django.views.generic.edit import FormView
-from smuggler.forms import ImportForm, DumpStorageForm
+from smuggler.forms import ImportForm, DumpStorageForm, LoadStorageForm
 from smuggler import settings
 from smuggler.utils import (save_uploaded_file_on_disk, serialize_to_response,
                             load_fixtures)
@@ -162,6 +161,11 @@ class LoadDataView(AdminFormMixin, FormView):
             ]
         return [(None, {'fields': fields})]
 
+    def get_context_data(self, **kwargs):
+        return super(LoadDataView, self).get_context_data(
+            title=_('Load Data'), form_name='load_data',
+            action_verb=_('Load'), has_file_field=True, **kwargs)
+
 
 class DumpStorageView(AdminFormMixin, FormView):
     archive_format = 'tgz'
@@ -191,15 +195,33 @@ class DumpStorageView(AdminFormMixin, FormView):
         return file_list
 
     def form_valid(self, form):
-        file_list = self.get_file_list(form.cleaned_data['files'], form.storage)
+        file_list = self.get_file_list(form.cleaned_data['files'],
+                                       form.storage)
         filename = '%s.%s' % (datetime.now().isoformat(),
                               self.archive_format)
-        response = StreamingHttpResponse(self.archive_generator(form.base_dir,
-                                                                file_list))
+        response = StreamingHttpResponse(
+            self.archive_generator(form.base_dir, file_list))
         response.content_type = 'application/x-compressed'
         response['Content-Disposition'] = 'attachment; filename=%s' % filename
         return response
 
+    def get_context_data(self, **kwargs):
+        return super(DumpStorageView, self).get_context_data(
+            title=_('Dump Storage'), form_name='dump_storage',
+            action_verb=_('Dump'),  **kwargs)
+
+
+class LoadStorageView(AdminFormMixin, FormView):
+    form_class = LoadStorageForm
+    template_name = 'smuggler/load_storage_form.html'
+    success_url = '.'
+
+    def get_context_data(self, **kwargs):
+        return super(LoadStorageView, self).get_context_data(
+            title=_('Load Storage'), form_name='load_storage',
+            action_verb=_('Load'), has_file_field=True, **kwargs)
+
 
 load_data = user_passes_test(is_superuser)(LoadDataView.as_view())
 dump_storage = user_passes_test(is_superuser)(DumpStorageView.as_view())
+load_storage = user_passes_test(is_superuser)(LoadStorageView.as_view())

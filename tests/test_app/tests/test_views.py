@@ -11,7 +11,7 @@ from django.utils.six import assertRegex, BytesIO
 from django.utils.six.moves import reload_module
 from freezegun import freeze_time
 from smuggler import settings
-from smuggler.forms import ImportForm, DumpStorageForm
+from smuggler.forms import ImportForm, DumpStorageForm, LoadStorageForm
 from tests.test_app.models import Page
 
 
@@ -102,6 +102,18 @@ class TestLoadDataGet(SuperUserTestCase, TestCase):
         response = self.c.get(self.url)
         self.assertIsInstance(response.context['form'],
                               ImportForm)
+
+    def test_title(self):
+        response = self.c.get(self.url)
+        self.assertContains(response, '<title>Load Data')
+
+    def test_enctype(self):
+        response = self.c.get(self.url)
+        self.assertContains(response, ' enctype="multipart/form-data"')
+
+    def test_button_verb(self):
+        response = self.c.get(self.url)
+        self.assertContains(response, '<input type="submit" value="Load"')
 
 
 class TestLoadDataPost(SuperUserTestCase, TransactionTestCase):
@@ -217,6 +229,18 @@ class TestDumpStorageGet(SuperUserTestCase, TestCase):
         self.assertIsInstance(response.context['form'],
                               DumpStorageForm)
 
+    def test_title(self):
+        response = self.c.get(self.url)
+        self.assertContains(response, '<title>Dump Storage')
+
+    def test_enctype(self):
+        response = self.c.get(self.url)
+        self.assertNotContains(response, ' enctype="multipart/form-data"')
+
+    def test_button_verb(self):
+        response = self.c.get(self.url)
+        self.assertContains(response, '<input type="submit" value="Dump"')
+
 
 class TestDumpStoragePostBasic(SuperUserTestCase, TestCase):
     def setUp(self):
@@ -272,3 +296,30 @@ class TestDumpStoragePost(SuperUserTestCase, TestCase):
             'uploads/uploaded_file.txt',
             'uploads',
         ]))
+
+
+class TestLoadStrageGet(SuperUserTestCase, TestCase):
+    def setUp(self):
+        super(TestLoadStrageGet, self).setUp()
+        self.url = reverse('load-storage')
+
+    def test_renders_correct_template(self):
+        response = self.c.get(self.url)
+        self.assertTemplateUsed(response, 'smuggler/load_storage_form.html')
+
+    def test_has_form_in_context(self):
+        response = self.c.get(self.url)
+        self.assertIsInstance(response.context['form'],
+                              LoadStorageForm)
+
+    def test_title(self):
+        response = self.c.get(self.url)
+        self.assertContains(response, '<title>Load Storage')
+
+    def test_enctype(self):
+        response = self.c.get(self.url)
+        self.assertContains(response, ' enctype="multipart/form-data"')
+
+    def test_button_verb(self):
+        response = self.c.get(self.url)
+        self.assertContains(response, '<input type="submit" value="Load"')

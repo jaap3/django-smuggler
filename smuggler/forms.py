@@ -6,7 +6,6 @@
 # General Public License version 3 (LGPLv3) as published by the Free
 # Software Foundation. See the file README for copying conditions.
 import os.path
-from itertools import chain
 from django import forms
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ImproperlyConfigured
@@ -194,3 +193,12 @@ class DumpStorageForm(forms.Form):
             'admin/js/SelectBox.js',
             'admin/js/SelectFilter2.js'
         ]
+
+
+class LoadStorageForm(forms.Form):
+    upload = forms.FileField(_('upload'))
+
+    class Media:
+        css = {
+            'all': ['admin/css/forms.css']
+        }

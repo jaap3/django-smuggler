@@ -111,8 +111,8 @@ class TestDumpStorageForm(TestCase):
     def test_get_choice_values(self):
         self.assertEqual(
             set(dict(self.form.fields['files'].choices).values()),
-            set([u'/files/ (2 files, 10\xa0bytes)',
-                 u'/uploads/ (1 file, 6\xa0bytes)',
-                 u'/uploads/sub/ (1 file, 9\xa0bytes)',
-                 u'/uploaded_file.txt (3\xa0bytes)'
-            ]))
+            set([
+                u'/files/ (2 files, 10\xa0bytes)',
+                u'/uploads/ (1 file, 6\xa0bytes)',
+                u'/uploads/sub/ (1 file, 9\xa0bytes)',
+                u'/uploaded_file.txt (3\xa0bytes)']))
