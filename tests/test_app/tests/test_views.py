@@ -298,9 +298,9 @@ class TestDumpStoragePost(SuperUserTestCase, TestCase):
         ]))
 
 
-class TestLoadStrageGet(SuperUserTestCase, TestCase):
+class TestLoadStorageGet(SuperUserTestCase, TestCase):
     def setUp(self):
-        super(TestLoadStrageGet, self).setUp()
+        super(TestLoadStorageGet, self).setUp()
         self.url = reverse('load-storage')
 
     def test_renders_correct_template(self):
