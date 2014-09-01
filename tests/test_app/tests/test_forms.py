@@ -15,7 +15,7 @@ p = lambda *args: os.path.abspath(os.path.join(os.path.dirname(__file__),
                                                *args))
 
 
-class TestForm(TestCase):
+class TestImportForm(TestCase):
     def test_requires_file(self):
         form = ImportForm({}, {})
         self.assertFalse(form.is_valid())
@@ -109,10 +109,12 @@ class TestDumpStorageForm(TestCase):
             set(['files', 'uploads', 'uploads/sub', 'uploaded_file.txt']))
 
     def test_get_choice_values(self):
+        values = '\n'.join(
+            sorted(dict(self.form.fields['files'].choices).values())
+        ).replace(u'\xa0', ' ')
         self.assertEqual(
-            set(dict(self.form.fields['files'].choices).values()),
-            set([
-                u'/files/ (2 files, 10\xa0bytes)',
-                u'/uploads/ (1 file, 6\xa0bytes)',
-                u'/uploads/sub/ (1 file, 9\xa0bytes)',
-                u'/uploaded_file.txt (3\xa0bytes)']))
+            values,
+            u'/files/ (2 files, 10 bytes)\n'
+            u'/uploaded_file.txt (3 bytes)\n'
+            u'/uploads/ (1 file, 6 bytes)\n'
+            u'/uploads/sub/ (1 file, 9 bytes)')

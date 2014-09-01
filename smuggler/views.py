@@ -14,7 +14,7 @@ from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.core.management.base import CommandError
 from django.core.serializers.base import DeserializationError
 from django.db import IntegrityError
-from django.http import HttpResponseRedirect, StreamingHttpResponse
+from django.http import HttpResponseRedirect
 from django.utils.encoding import force_text
 from django.utils.six import BytesIO
 from django.utils.translation import ugettext_lazy as _, ungettext_lazy
@@ -25,6 +25,10 @@ from smuggler.forms import ImportForm, DumpStorageForm, LoadStorageForm
 from smuggler import settings
 from smuggler.utils import (save_uploaded_file_on_disk, serialize_to_response,
                             load_fixtures)
+try:
+    from django.http import StreamingHttpResponse
+except ImportError:  # Django < 1.5
+    from django.http import HttpResponse as StreamingHttpResponse
 
 
 def dump_to_response(request, app_label=[], exclude=[], filename_prefix=None):
@@ -175,14 +179,14 @@ class DumpStorageView(AdminFormMixin, FormView):
 
     def archive_generator(self, base_dir, file_list):
         out = BytesIO()
-        with tarfile.open(fileobj=out, mode='w|gz') as archive:
-            for path in file_list:
-                archive.add(path, os.path.relpath(path, base_dir),
-                            recursive=False)
-                yield out.getvalue()
-                out.truncate(0)
+        archive = tarfile.open(fileobj=out, mode='w|gz')
+        for path in file_list:
+            archive.add(path, os.path.relpath(path, base_dir),
+                        recursive=False)
+            yield out.getvalue()
+            out.truncate(0)
+        archive.close()
         yield out.getvalue()
-        out.close()
 
     def get_file_list(self, selected, storage):
         file_list = []

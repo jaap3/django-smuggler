@@ -262,7 +262,11 @@ class TestDumpStoragePostBasic(SuperUserTestCase, TestCase):
 
     def test_archive(self):
         f = BytesIO()
-        for data in self.response.streaming_content:
+        if hasattr(self.response, 'streaming_content'):
+            streaming_content = self.response.streaming_content
+        else:  # Django < 1.5
+            streaming_content = self.response.content
+        for data in streaming_content:
             f.write(data)
         f.seek(0)
         archive = tarfile.open(fileobj=f,
@@ -287,7 +291,11 @@ class TestDumpStoragePost(SuperUserTestCase, TestCase):
                 'uploads'
             ]})
         f = BytesIO()
-        for data in response.streaming_content:
+        if hasattr(response, 'streaming_content'):
+            streaming_content = response.streaming_content
+        else:  # Django < 1.5
+            streaming_content = response.content
+        for data in streaming_content:
             f.write(data)
         f.seek(0)
         archive = tarfile.open(fileobj=f,

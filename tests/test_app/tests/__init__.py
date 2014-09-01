@@ -4,7 +4,7 @@ from .test_auth import (TestSmugglerViewsAllowsSuperuser,
                         TestSmugglerViewsDeniesNonSuperuser,
                         TestSmugglerViewsRequireAuthentication)
 from .test_dump import BasicDumpTestCase
-from .test_forms import TestForm
+from .test_forms import TestImportForm, TestDumpStorageForm
 from .test_load import TestInvalidLoad, SimpleLoadTestCase
 from .test_urls import TestSmugglerUrls
 from .test_utils import TestSaveUploadedFileOnDisk
@@ -12,7 +12,11 @@ from .test_views import (TestDumpData,
                          TestDumpHandlesErrorsGracefully,
                          TestDumpViewsGenerateDownloadsWithSaneFilenames,
                          TestLoadDataGet,
-                         TestLoadDataPost)
+                         TestLoadDataPost,
+                         TestDumpStorageGet,
+                         TestDumpStoragePostBasic,
+                         TestDumpStoragePost,
+                         TestLoadStorageGet)
 
 # This list exist to prevent flake8 from complaining.
 __tests__ = [
@@ -22,7 +26,7 @@ __tests__ = [
     TestSmugglerViewsDeniesNonSuperuser,
     TestSmugglerViewsRequireAuthentication,
     BasicDumpTestCase,
-    TestForm,
+    TestImportForm,
     TestInvalidLoad,
     SimpleLoadTestCase,
     TestSmugglerUrls,
@@ -31,5 +35,8 @@ __tests__ = [
     TestDumpHandlesErrorsGracefully,
     TestDumpViewsGenerateDownloadsWithSaneFilenames,
     TestLoadDataGet,
-    TestLoadDataPost
+    TestLoadDataPost,
+    TestDumpStoragePostBasic,
+    TestDumpStoragePost,
+    TestLoadStorageGet
 ]
