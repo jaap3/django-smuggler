@@ -12,8 +12,9 @@ from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import DefaultStorage
 from django.core.serializers import get_serializer_formats
+from django.template.defaultfilters import filesizeformat
 from django.utils.functional import cached_property
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import ugettext_lazy as _, ungettext_lazy
 from smuggler import settings
 
 
@@ -125,11 +126,7 @@ class DumpStorageForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         super(DumpStorageForm, self).__init__(*args, **kwargs)
-        dirs, files = self.storage.listdir('.')
-        choices = [
-            [self.format_choice(path, True) for path in dirs],
-            [self.format_choice(path) for path in files]]
-        self.fields['files'].choices = chain(*choices)
+        self.fields['files'].choices = self.get_choices()
         self.fields['files'].help_text = _('Contents of %(dir)s') % {
             'dir': self.base_dir}
 
@@ -152,11 +149,38 @@ class DumpStorageForm(forms.Form):
     def base_dir(self):
         return self.storage.path('.')
 
-    def format_choice(self, path, is_dir=False):
+    def get_choices(self, base_dir='.'):
+        choices = []
+        dirs, files = self.storage.listdir(base_dir)
+        for path in dirs:
+            if base_dir != '.':
+                path = os.path.join(base_dir, path)
+            dir_files = self.storage.listdir(path)[1]
+            dir_size = sum(os.path.getsize(
+                os.path.join(self.storage.path(path), fn)
+            ) for fn in dir_files)
+            choices.append(self.format_choice(path, True,
+                                              num_files=len(dir_files),
+                                              size=filesizeformat(dir_size)))
+            choices += self.get_choices(base_dir=path)
+        if base_dir == '.':
+            for path in files:
+                size = filesizeformat(
+                    os.path.getsize(
+                        os.path.join(self.storage.path(base_dir), path)))
+                choices.append(self.format_choice(path, size=size))
+        return choices
+
+    def format_choice(self, path, is_dir=False, **format_kwargs):
+        format_kwargs['path'] = path
         if is_dir:
-            display = '/%s/' % path
+            display = ungettext_lazy(
+                '/%(path)s/ (%(num_files)d file, %(size)s)',
+                '/%(path)s/ (%(num_files)d files, %(size)s)',
+                format_kwargs['num_files']
+            ) % format_kwargs
         else:
-            display = '/%s' % path
+            display = '/%(path)s (%(size)s)' % format_kwargs
         return path, display
 
     class Media:

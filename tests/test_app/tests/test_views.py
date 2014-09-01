@@ -218,14 +218,15 @@ class TestDumpStorageGet(SuperUserTestCase, TestCase):
                               DumpStorageForm)
 
 
-class TestDumpStoragePost(SuperUserTestCase, TestCase):
+class TestDumpStoragePostBasic(SuperUserTestCase, TestCase):
     def setUp(self):
-        super(TestDumpStoragePost, self).setUp()
+        super(TestDumpStoragePostBasic, self).setUp()
         url = reverse('dump-storage')
         with freeze_time('2012-01-14'):
             self.response = self.c.post(url, {
-                'files': ['files', 'uploads', 'uploaded_file.txt']
-            })
+                'files': [
+                    'files', 'uploads', 'uploads/sub', 'uploaded_file.txt'
+                ]})
 
     def test_contenttype(self):
         self.assertEqual(self.response.content_type,
@@ -242,12 +243,32 @@ class TestDumpStoragePost(SuperUserTestCase, TestCase):
         f.seek(0)
         archive = tarfile.open(fileobj=f,
                                mode='r:gz')
-        self.assertEqual(archive.getnames(), [
+        self.assertEqual(set(archive.getnames()), set([
+            'files/uploaded_file_2.txt',
             'files/uploaded_file.txt',
             'files',
-            'uploads/sub/uploaded_file.txt',
-            'uploads/sub',
             'uploads/uploaded_file.txt',
             'uploads',
+            'uploads/sub/uploaded_file.txt',
+            'uploads/sub',
             'uploaded_file.txt'
-        ])
+        ]))
+
+
+class TestDumpStoragePost(SuperUserTestCase, TestCase):
+    def test_does_not_recurse_into_subdir(self):
+        url = reverse('dump-storage')
+        response = self.c.post(url, {
+            'files': [
+                'uploads'
+            ]})
+        f = BytesIO()
+        for data in response.streaming_content:
+            f.write(data)
+        f.seek(0)
+        archive = tarfile.open(fileobj=f,
+                               mode='r:gz')
+        self.assertEqual(set(archive.getnames()), set([
+            'uploads/uploaded_file.txt',
+            'uploads',
+        ]))

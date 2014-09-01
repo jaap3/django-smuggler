@@ -180,14 +180,13 @@ class DumpStorageView(AdminFormMixin, FormView):
         yield out.getvalue()
         out.close()
 
-    def get_file_list(self, selected, storage, base_dir='./'):
+    def get_file_list(self, selected, storage):
         file_list = []
         for path in selected:
-            path = os.path.join(base_dir, path)
             abspath = storage.path(path)
             if os.path.isdir(abspath):
-                file_list += self.get_file_list(chain(*storage.listdir(path)),
-                                                storage, base_dir=path)
+                file_list += [storage.path(os.path.join(abspath, fn))
+                              for fn in storage.listdir(path)[1]]
             file_list.append(abspath)
         return file_list
 

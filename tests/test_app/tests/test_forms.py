@@ -103,7 +103,16 @@ class TestDumpStorageForm(TestCase):
             self.assertEqual(str(assertion), 'Storage class must implement'
                                              ' `listdir` and `path`.')
 
-    def test_get_choices(self):
+    def test_get_choice_keys(self):
         self.assertEqual(
             set(dict(self.form.fields['files'].choices).keys()),
-            set(['files', 'uploads', 'uploaded_file.txt']))
+            set(['files', 'uploads', 'uploads/sub', 'uploaded_file.txt']))
+
+    def test_get_choice_values(self):
+        self.assertEqual(
+            set(dict(self.form.fields['files'].choices).values()),
+            set([u'/files/ (2 files, 10\xa0bytes)',
+                 u'/uploads/ (1 file, 6\xa0bytes)',
+                 u'/uploads/sub/ (1 file, 9\xa0bytes)',
+                 u'/uploaded_file.txt (3\xa0bytes)'
+            ]))
